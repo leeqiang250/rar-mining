@@ -1,174 +1,78 @@
 package com.mining.mining;
 
-import com.mining.mining.rar.RarDecompressionUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.mining.mining.dto.Dto;
+import com.mining.mining.dto.MiningInfoDto;
+import com.mining.mining.file.RARFile;
+import com.mining.mining.http.DispatchPath;
+import com.mining.mining.http.Http;
+import com.mining.mining.mining.RARMining;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.util.StringUtils;
 
-import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.File;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
 
 @SpringBootApplication
-public class MiningApplication {
+public class MiningApplication implements ApplicationRunner {
 
-	//private static Logger log = LoggerFactory.getLogger("MiningApplication");
+	@Value("${dispatch-host}")
+	private String dispatchHost;
+
+	@Value("${resource-path}")
+	private String resourcePath;
+
+	@Value("${rar-file}")
+	private String rarFileName;
+
 
 	public static void main(String[] args) {
-
-//		{
-//			FileWriter writer = null;
-//			try {
-//				new File("/resource/password/1.key.end").delete();
-//				writer = new FileWriter(new File("/resource/password/1.key.end"), true);
-//				int i = 0;
-//				while (i < 200) {
-//					i++;
-//					writer.write("\n");
-//					writer.write(i + "");
-////					writer.write("64876655");
-//				}
-//				writer.flush();
-//				writer.close();
-//			} catch (IOException e) {
-//				e.printStackTrace();
-//			}
-//		}
-
-		String destPath = "/resource/";
-		File rarFile = new File(destPath + "resource.rar");
-		String passwordPath = destPath + "password/";
-		String keyFile = destPath + "key.txt";
-
-		checkRarFile(rarFile);
-		testFile(destPath + "test.txt", passwordPath);
-
-		int n = Runtime.getRuntime().availableProcessors() * 10;
-		LinkedBlockingQueue<String> queue = new LinkedBlockingQueue<>(n * 100);
-		ExecutorService fixedThreadPool = Executors.newFixedThreadPool(n);
-		while (n > 0) {
-			fixedThreadPool.execute(() -> {
-				System.out.println("Calc Thread:" + Thread.currentThread().getName());
-
-				ByteArrayOutputStream stream = new ByteArrayOutputStream();
-
-				while (true) {
-					RarDecompressionUtil.unrar_v2(rarFile, destPath, keyFile, queue, stream);
-				}
-			});
-			n--;
-		}
-		start(queue, passwordPath);
-
 		SpringApplication.run(MiningApplication.class, args);
 	}
 
-	private static void checkRarFile(File rarFile) {
-		if (!rarFile.exists()) {
-			System.out.println("Calc Thread:");
+	@Override
+	public void run(ApplicationArguments args) throws Exception {
+		RARFile.Init(resourcePath, rarFileName);
+
+		if (!RARFile.TestFile()) {
+			//
 			System.exit(0);
 		}
-	}
 
-	private static void start(LinkedBlockingQueue<String> queue, String passwordPath) {
-		new Thread(() -> {
-			while (true) {
-				String file = null;
-				List<String> passwords = null;
-				for (File e : new File(passwordPath).listFiles((dir, name) -> name.endsWith(".key"))) {
-					if (e.getName().endsWith(".key")) {
-						passwords = readPassWords(e);
-						if (null != passwords) {
-							file = e.getPath();
-							break;
-						}
+		while (true) {
+			try {
+				Dto<MiningInfoDto> dto = Http.DispatchGet(dispatchHost + DispatchPath.MINING_INFO, MiningInfoDto.class);
+				if (Dto.success(dto)) {
+					String rarFileMD5 = RARFile.RARFileMD5();
+					while (StringUtils.isEmpty(rarFileMD5) || !rarFileMD5.equals(dto.data().rarMD5())) {
+						RARFile.DownloadRARFile(Http.Get(dispatchHost + DispatchPath.TASK_DOWNLOAD_RAR_FILE));
+						rarFileMD5 = RARFile.RARFileMD5();
+						Thread.sleep(5000L);
 					}
-					try {
-						Thread.sleep(1000L);
-					} catch (InterruptedException e1) {
-						e1.printStackTrace();
+
+					RARFile.RARFile = new File(RARFile.RARPath);
+
+					int count = Runtime.getRuntime().availableProcessors() * (dto.data.coreThreadCount() > 0 ? dto.data.coreThreadCount() : 10);
+					ExecutorService fixedThreadPool = Executors.newFixedThreadPool(count);
+					while (count > 0) {
+						fixedThreadPool.execute(() -> {
+							String group = UUID.randomUUID().toString();
+							new RARMining(dispatchHost, group).start();
+						});
+						count--;
 					}
+					break;
 				}
-				if (null != passwords) {
-					for (int i = 0; i < passwords.size(); i++) {
-						String password = passwords.get(i);
-						if (!"".equals(password)) {
-							try {
-								queue.put(password);
-							} catch (InterruptedException e) {
-								e.printStackTrace();
-							}
-						}
-					}
-
-					try {
-						while (0 < queue.size()) {
-							Thread.sleep(1000L);
-						}
-						new File(file).renameTo(new File(file + ".end"));
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-				} else {
-					try {
-						Thread.sleep(1000L);
-					} catch (InterruptedException e1) {
-						e1.printStackTrace();
-					}
-				}
-			}
-		}).start();
-	}
-
-	private static void testFile(String testFile, String passwordPath) {
-		File test = new File(testFile);
-		File password = new File(passwordPath);
-		if (test.exists()) {
-			if (!test.delete()) {
-				System.out.println("Calc Thread:");
-				System.exit(0);
+			} catch (Exception e) {
+				e.printStackTrace();
+			} finally {
+				Thread.sleep(5000L);
 			}
 		}
-
-		try {
-			if (!password.exists()) {
-				if (!password.mkdir()) {
-					System.out.println("Calc Thread:");
-					System.exit(0);
-				}
-			}
-
-			FileWriter writer = new FileWriter(test, true);
-			writer.write("\n");
-			writer.flush();
-			writer.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-			System.out.println("Calc Thread:");
-			System.exit(0);
-		}
-	}
-
-	private static List<String> readPassWords(File file) {
-		boolean error = false;
-		List list = new ArrayList<>();
-		try {
-			BufferedReader bw = new BufferedReader(new FileReader(file));
-			String line = null;
-			while ((line = bw.readLine()) != null) {
-				list.add(line);
-			}
-			bw.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-			error = true;
-		}
-		return error ? null : list;
 	}
 }

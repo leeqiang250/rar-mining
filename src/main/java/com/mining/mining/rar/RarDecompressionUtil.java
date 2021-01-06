@@ -107,18 +107,15 @@ public class RarDecompressionUtil {
     }
 
     /**
-     *
      * @param srcRarFile
      * @param destPath
      * @param keyFile
-     * @param queue
      * @param stream
      */
-    public static void unrar_v2(File srcRarFile, String destPath, String keyFile, LinkedBlockingQueue<String> queue, ByteArrayOutputStream stream) {
+    public static boolean unRAR_V2(File srcRarFile, String keyFile, String password, ByteArrayOutputStream stream) {
+        boolean result = false;
         Archive archive = null;
-        OutputStream unOut = null;
         try {
-            String password = queue.take();
             System.out.println(Thread.currentThread().getName() + ":" + password);
             archive = new Archive(srcRarFile, password, true);
 
@@ -126,7 +123,10 @@ public class RarDecompressionUtil {
             while (null != fileHeader) {
                 if (!fileHeader.isDirectory()) {
                     stream.reset();
+
                     archive.extractFile(fileHeader, stream);
+
+                    result = true;
 
                     FileWriter writer = new FileWriter(keyFile, true);
                     writer.write("\n");
@@ -134,14 +134,15 @@ public class RarDecompressionUtil {
                     writer.flush();
                     writer.close();
 
-                    FileOutputStream fileOutputStream = new FileOutputStream(destPath + getFileName(fileHeader));
-                    fileOutputStream.write(stream.toByteArray());
-                    fileOutputStream.flush();
-                    fileOutputStream.close();
+                    break;
                 }
                 fileHeader = archive.nextFileHeader();
             }
+        } catch (RarException e) {
+            e.printStackTrace();
         } catch (Exception e) {
+            e.printStackTrace();
+            //
         } finally {
             if (null != archive) {
                 try {
@@ -150,14 +151,9 @@ public class RarDecompressionUtil {
                     e.printStackTrace();
                 }
             }
-            if (unOut != null) {
-                try {
-                    unOut.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
         }
+
+        return result;
     }
 
     private static String getDestFileNameString(String destPath, FileHeader fileHeader) {
