@@ -32,7 +32,7 @@ public class RARMining {
 					if (Dto.success(confirmDto) && confirmDto.data) {
 						for (String password : taskDto.data.text.split(",")) {
 							if (!"".equals(password)) {
-								if (RarDecompressionUtil.unRAR_V2(RARFile.RARFile, RARFile.KeyPath, password, stream)) {
+								if (RarDecompressionUtil.unRAR_V2(RARFile.RARFile, RARFile.KeyPath,taskDto.data.group, password, stream)) {
 									while (true) {
 										try {
 											Dto<Boolean> discoverDto = Http.DispatchGet(

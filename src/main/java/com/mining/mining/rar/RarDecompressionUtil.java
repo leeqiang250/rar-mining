@@ -112,11 +112,10 @@ public class RarDecompressionUtil {
      * @param keyFile
      * @param stream
      */
-    public static boolean unRAR_V2(File srcRarFile, String keyFile, String password, ByteArrayOutputStream stream) {
+    public static boolean unRAR_V2(File srcRarFile, String keyFile, String group, String password, ByteArrayOutputStream stream) {
         boolean result = false;
         Archive archive = null;
         try {
-            System.out.println(Thread.currentThread().getName() + ":" + password);
             archive = new Archive(srcRarFile, password, true);
 
             FileHeader fileHeader = archive.nextFileHeader();
@@ -130,7 +129,7 @@ public class RarDecompressionUtil {
 
                     FileWriter writer = new FileWriter(keyFile, true);
                     writer.write("\n");
-                    writer.write(password);
+                    writer.write("group:" + group + ",key:" + password);
                     writer.flush();
                     writer.close();
 
