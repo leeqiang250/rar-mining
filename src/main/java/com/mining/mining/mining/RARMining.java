@@ -6,14 +6,17 @@ import com.mining.mining.file.RARFile;
 import com.mining.mining.http.DispatchPath;
 import com.mining.mining.http.Http;
 import com.mining.mining.rar.RarDecompressionUtil;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.io.ByteArrayOutputStream;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 public class RARMining {
 
 	private String group = null;
 	private String dispatchHost;
+	private long lastReportTs = 0L;
+	private long reportInterval = 1000L * 60L;
 
 	public RARMining(String dispatchHost, String group) {
 		this.dispatchHost = dispatchHost;
@@ -24,6 +27,10 @@ public class RARMining {
 		ByteArrayOutputStream stream = new ByteArrayOutputStream();
 		while (true) {
 			try {
+				if (System.currentTimeMillis() - lastReportTs > reportInterval) {
+					report("");
+				}
+
 				Dto<TaskDto> taskDto = Http.DispatchGet(dispatchHost + DispatchPath.TASK_GET, TaskDto.class);
 				if (Dto.success(taskDto) && null != taskDto.data) {
 					Dto<Boolean> confirmDto = Http.DispatchGet(
@@ -32,7 +39,7 @@ public class RARMining {
 					if (Dto.success(confirmDto) && confirmDto.data) {
 						for (String password : taskDto.data.text.split(",")) {
 							if (!"".equals(password)) {
-								if (RarDecompressionUtil.unRAR_V2(RARFile.RARFile, RARFile.KeyPath,taskDto.data.group, password, stream)) {
+								if (RarDecompressionUtil.unRAR_V2(RARFile.RARFile, RARFile.KeyPath, taskDto.data.group, password, stream)) {
 									while (true) {
 										try {
 											Dto<Boolean> discoverDto = Http.DispatchGet(
@@ -51,6 +58,9 @@ public class RARMining {
 											//
 										}
 									}
+								}
+								if (System.currentTimeMillis() - lastReportTs > reportInterval) {
+									report(password);
 								}
 							}
 						}
@@ -91,4 +101,19 @@ public class RARMining {
 			e.printStackTrace();
 		}
 	}
+
+	private void report(String password) {
+		try {
+			Dto<Boolean> reportDto = Http.DispatchGet(
+					dispatchHost + String.format(DispatchPath.MINING_RUN_REPORT, InetAddress.getLocalHost().getHostAddress(), group, password),
+					Boolean.class);
+			if (Dto.success(reportDto) && reportDto.data) {
+				lastReportTs = System.currentTimeMillis();
+			}
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+			//
+		}
+	}
+
 }
