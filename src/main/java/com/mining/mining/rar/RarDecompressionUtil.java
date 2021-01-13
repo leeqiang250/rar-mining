@@ -106,39 +106,94 @@ public class RarDecompressionUtil {
         }
     }
 
+    public static boolean unRAR_V3(File srcRarFile, String keyFile, String group, String password, ByteArrayOutputStream stream) {
+        boolean result = false;
+        Archive archive = null;
+        try {
+            archive = new Archive(srcRarFile, password, true);
+            if (archive.headers.size() > 0) {
+                System.out.println("headers:" + archive.headers.toString());
+            }
+            if (archive.test() && null != archive.getMainHeader() && !archive.getMainHeader().isEncrypted()) {
+                FileHeader fileHeader = archive.nextFileHeader();
+                while (null != fileHeader) {
+                    if (!fileHeader.isDirectory()) {
+                        stream.reset();
+
+                        archive.extractFile(fileHeader, stream);
+
+                        result = true;
+
+                        FileWriter writer = new FileWriter(keyFile, true);
+                        writer.write("\n");
+                        writer.write("group:" + group + ",key:" + password);
+                        writer.flush();
+                        writer.close();
+
+                        stream.reset();
+
+                        break;
+                    }
+                    fileHeader = archive.nextFileHeader();
+                }
+            }
+        } catch (RarException e) {
+            //e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+            //
+        } finally {
+            if (null != archive) {
+                try {
+                    archive.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return result;
+    }
+
     /**
+     *
      * @param srcRarFile
-     * @param destPath
      * @param keyFile
+     * @param group
+     * @param password
      * @param stream
+     * @return
      */
     public static boolean unRAR_V2(File srcRarFile, String keyFile, String group, String password, ByteArrayOutputStream stream) {
         boolean result = false;
         Archive archive = null;
         try {
             archive = new Archive(srcRarFile, password, true);
-
-            FileHeader fileHeader = archive.nextFileHeader();
-            while (null != fileHeader) {
-                if (!fileHeader.isDirectory()) {
-                    stream.reset();
-
-                    archive.extractFile(fileHeader, stream);
-
-                    result = true;
-
-                    FileWriter writer = new FileWriter(keyFile, true);
-                    writer.write("\n");
-                    writer.write("group:" + group + ",key:" + password);
-                    writer.flush();
-                    writer.close();
-
-                    break;
-                }
-                fileHeader = archive.nextFileHeader();
+            if (archive.test()) {
+                System.out.println(password + srcRarFile.toPath().toString());
             }
+
+//            FileHeader fileHeader = archive.nextFileHeader();
+//            while (null != fileHeader) {
+//                if (!fileHeader.isDirectory()) {
+//                    stream.reset();
+//
+//                    archive.extractFile(fileHeader, stream);
+//
+//                    result = true;
+//
+//                    FileWriter writer = new FileWriter(keyFile, true);
+//                    writer.write("\n");
+//                    writer.write("group:" + group + ",key:" + password);
+//                    writer.flush();
+//                    writer.close();
+//
+//                    break;
+//                }
+//                fileHeader = archive.nextFileHeader();
+//            }
         } catch (RarException e) {
-            e.printStackTrace();
+            //e.printStackTrace();
         } catch (Exception e) {
             e.printStackTrace();
             //

@@ -67,7 +67,7 @@ public class Archive implements Closeable {
 
 	private final ComprDataIO dataIO;
 
-	private final List<BaseBlock> headers = new ArrayList<BaseBlock>();
+	public final List<BaseBlock> headers = new ArrayList<BaseBlock>();
 
 	private MarkHeader markHead = null;
 
@@ -129,7 +129,7 @@ public class Archive implements Closeable {
 		totalPackedSize = 0L;
 		totalPackedRead = 0L;
 		close();
-		rof = new ReadOnlyAccessFile(file, this.password);
+ 		rof = new ReadOnlyAccessFile(file, this.password);
 		// / readHeaders();
 		try {
 			readHeaders();
@@ -570,4 +570,22 @@ public class Archive implements Closeable {
 		return pass;
 	}
 
+	public boolean test() {
+		if (!this.dataIO.isTestMode() || !isPass()) {
+			return false;
+		}
+
+//		if (!getMainHeader().isEncrypted()) {
+//			FileHeader fh = nextFileHeader();
+//			try {
+//				extractFile(fh, null);
+//				nextFileHeader();
+//				return true;
+//			} catch (RarException e) {
+//				return false;
+//			}
+//		}
+
+		return true;
+	}
 }

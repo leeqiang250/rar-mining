@@ -6,11 +6,13 @@ import com.mining.mining.file.RARFile;
 import com.mining.mining.http.DispatchPath;
 import com.mining.mining.http.Http;
 import com.mining.mining.rar.RarDecompressionUtil;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.ByteArrayOutputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
+@Slf4j
 public class RARMining {
 
 	private String group = null;
@@ -37,7 +39,12 @@ public class RARMining {
 							dispatchHost + String.format(DispatchPath.TASK_CONFIRM, taskDto.data.group),
 							Boolean.class);
 					if (Dto.success(confirmDto) && confirmDto.data) {
-						for (String password : taskDto.data.text.split(",")) {
+						String[] passwords = taskDto.data.text.split(",");
+						int len = passwords.length;
+						for (int i = 0; i < len; i++) {
+							log.info("count:{} total:{} group:{}", i, len, group);
+							String password = passwords[i];
+							//for (String password : taskDto.data.text.split(",")) {
 							if (!"".equals(password)) {
 								if (RarDecompressionUtil.unRAR_V2(RARFile.RARFile, RARFile.KeyPath, taskDto.data.group, password, stream)) {
 									while (true) {
