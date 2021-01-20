@@ -35,6 +35,7 @@ public class RARMining {
 		String[] passwords = null;
 		File file = null;
 		int len = 0;
+		long ts = 0L;
 		while (true) {
 			try {
 				taskDto = Http.DispatchGet(dispatchHost + Path.TASK_GET, TaskDto.class);
@@ -63,6 +64,8 @@ public class RARMining {
 							writer.flush();
 							writer.close();
 
+							ts = System.currentTimeMillis();
+
 							Runtime.getRuntime().exec("chmod +x " + name);
 							process = new ProcessBuilder(file.getAbsolutePath()).redirectErrorStream(true).start();
 							inputStream = process.getInputStream();
@@ -71,7 +74,7 @@ public class RARMining {
 								if (0 <= line.indexOf(taskDto.data.group)) {
 									report(line);
 
-									log.info("line:{}", line);
+									log.info("{}", line);
 								}
 
 								if (0 <= line.indexOf(ok)) {
@@ -83,6 +86,8 @@ public class RARMining {
 									log.info("discover:{}", line);
 								}
 							}
+
+							log.info("mining len {} ts {}", (System.currentTimeMillis() - ts) / 1000L);
 
 							while (true) {
 								try {
@@ -99,7 +104,7 @@ public class RARMining {
 							}
 
 							file.delete();
-						}else {
+						} else {
 							sleep();
 						}
 					} else {
@@ -152,7 +157,7 @@ public class RARMining {
 		Thread.sleep(5000L);
 	}
 
-	private boolean report( String line) {
+	private boolean report(String line) {
 		try {
 			Dto<Boolean> reportDto = Http.DispatchGet(
 					dispatchHost + String.format(Path.MINING_RUN_REPORT, InetAddress.getLocalHost().getHostAddress(), group) + line,

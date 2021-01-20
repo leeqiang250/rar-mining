@@ -32,6 +32,9 @@ public class Dispatch {
 					Runtime.getRuntime().exec("chmod +x " + dto.data.programPath);
 
 					int count = Runtime.getRuntime().availableProcessors() * (dto.data.coreThreadCount() > 0 ? dto.data.coreThreadCount() : 10);
+
+					log.error("mining thread count {}", count);
+
 					ExecutorService fixedThreadPool = Executors.newFixedThreadPool(count);
 					while (count > 0) {
 						fixedThreadPool.execute(() -> {
