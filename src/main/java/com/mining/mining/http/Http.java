@@ -2,6 +2,7 @@ package com.mining.mining.http;
 
 import com.alibaba.fastjson.JSONObject;
 import com.mining.mining.dto.Dto;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -12,6 +13,7 @@ import org.apache.http.impl.client.HttpClients;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
+@Slf4j
 public class Http<T> {
 
 	public static <T> Dto<T> DispatchGet(String url, Class<T> clazz) {
@@ -48,7 +50,7 @@ public class Http<T> {
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
-			//
+			log.error("URL {} Exception {}", url, e);
 		} finally {
 			if (null != response) {
 				try {

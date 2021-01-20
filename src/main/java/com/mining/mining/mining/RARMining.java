@@ -114,6 +114,31 @@ public class RARMining {
 					e1.printStackTrace();
 					log.error("Exception {}", e1);
 				}
+			} finally {
+				if (null != reader) {
+					try {
+						reader.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+				if (null != inputStream) {
+					try {
+						inputStream.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+				if (null != process) {
+					process.destroy();
+				}
+				if (null != writer) {
+					try {
+						writer.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
 			}
 		}
 	}
