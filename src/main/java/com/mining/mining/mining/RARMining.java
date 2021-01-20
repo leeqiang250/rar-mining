@@ -100,10 +100,10 @@ public class RARMining {
 
 							file.delete();
 						}else {
-							log.info("taskDto {}", taskDto);
 							sleep();
 						}
 					} else {
+						log.info("taskDto {}", taskDto);
 						sleep();
 					}
 				} else {
