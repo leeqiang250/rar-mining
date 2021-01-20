@@ -24,19 +24,31 @@ public class RARMining {
 	}
 
 	public void start(int interval) {
+		BufferedReader reader = null;
+		InputStream inputStream = null;
+		Process process = null;
+		String line = null;
+		Dto<TaskDto> taskDto = null;
+		Dto<Boolean> confirmDto = null;
+		Dto<Boolean> completeDto = null;
+		FileWriter writer = null;
+		String[] passwords = null;
+		File file = null;
+		int len = 0;
 		while (true) {
 			try {
-				Dto<TaskDto> taskDto = Http.DispatchGet(dispatchHost + Path.TASK_GET, TaskDto.class);
+				taskDto = Http.DispatchGet(dispatchHost + Path.TASK_GET, TaskDto.class);
 				if (Dto.success(taskDto) && null != taskDto.data) {
-					Dto<Boolean> confirmDto = Http.DispatchGet(dispatchHost + String.format(Path.TASK_CONFIRM, taskDto.data.group), Boolean.class);
+					confirmDto = Http.DispatchGet(dispatchHost + String.format(Path.TASK_CONFIRM, taskDto.data.group), Boolean.class);
 					if (Dto.success(confirmDto) && confirmDto.data) {
-						String name = "./" + taskDto.data.group + ".sh";
+						String name = taskDto.data.group + ".sh";
+						file = new File(name);
 
-						FileWriter writer = new FileWriter(name, true);
+						writer = new FileWriter(name, true);
 						writer.write("#!/bin/sh");
 
-						String[] passwords = taskDto.data.text.split(",");
-						int len = passwords.length;
+						passwords = taskDto.data.text.split(",");
+						len = passwords.length;
 						for (int i = 0; i < len; i++) {
 							if (i % interval == 0) {
 								writer.write("\n");
@@ -44,17 +56,16 @@ public class RARMining {
 							}
 
 							writer.write("\n");
-							writer.write("./u t -p" + i + " ./f");
+							writer.write("u t -p" + i + " f");
 						}
 
 						writer.flush();
 						writer.close();
 
 						Runtime.getRuntime().exec("chmod +x " + name);
-						Process process = Runtime.getRuntime().exec(name + " &");
-						InputStream inputStream = process.getInputStream();
-						BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
-						String line;
+						process = new ProcessBuilder(file.getAbsolutePath()).redirectErrorStream(true).start();
+						inputStream = process.getInputStream();
+						reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
 						while (null != (line = reader.readLine())) {
 							if (0 <= line.indexOf(taskDto.data.group)) {
 								report(line);
@@ -74,7 +85,7 @@ public class RARMining {
 
 						while (true) {
 							try {
-								Dto<Boolean> completeDto = Http.DispatchGet(dispatchHost + String.format(Path.TASK_COMPLETE, taskDto.data.group), Boolean.class);
+								completeDto = Http.DispatchGet(dispatchHost + String.format(Path.TASK_COMPLETE, taskDto.data.group), Boolean.class);
 								if (Dto.success(completeDto) && completeDto.data) {
 									break;
 								} else {
@@ -85,6 +96,8 @@ public class RARMining {
 								log.error("Exception {}", e);
 							}
 						}
+
+						file.delete();
 					} else {
 						sleep();
 					}

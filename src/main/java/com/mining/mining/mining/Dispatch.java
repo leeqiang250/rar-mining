@@ -32,7 +32,6 @@ public class Dispatch {
 					Runtime.getRuntime().exec("chmod +x " + dto.data.programPath);
 
 					int count = Runtime.getRuntime().availableProcessors() * (dto.data.coreThreadCount() > 0 ? dto.data.coreThreadCount() : 10);
-					count = 1;
 					ExecutorService fixedThreadPool = Executors.newFixedThreadPool(count);
 					while (count > 0) {
 						fixedThreadPool.execute(() -> {
