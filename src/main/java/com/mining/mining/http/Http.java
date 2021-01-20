@@ -15,13 +15,12 @@ import java.io.IOException;
 public class Http<T> {
 
 	public static <T> Dto<T> DispatchGet(String url, Class<T> clazz) {
-		JSONObject json = JSONObject.parseObject(Get(url), JSONObject.class);
-		if (null != json) {
-			return new Dto<T>()
-					.code(json.getIntValue("code"))
-					.msg(json.getString("msg"))
-					.ts(json.getLongValue("ts"))
-					.data(json.getObject("data", clazz));
+		byte[] data = Get(url);
+		if (null != data) {
+			JSONObject json = JSONObject.parseObject(data, JSONObject.class);
+			if (null != json) {
+				return new Dto<T>().code(json.getIntValue("code")).msg(json.getString("msg")).ts(json.getLongValue("ts")).data(json.getObject("data", clazz));
+			}
 		}
 
 		return null;

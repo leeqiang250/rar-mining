@@ -110,7 +110,7 @@ public class RarDecompressionUtil {
         boolean result = false;
         Archive archive = null;
         try {
-            archive = new Archive(srcRarFile, password, true);
+            archive = new Archive(srcRarFile, "123456", true);
             if (archive.headers.size() > 0) {
                 System.out.println("headers:" + archive.headers.toString());
             }
@@ -141,7 +141,12 @@ public class RarDecompressionUtil {
             //e.printStackTrace();
         } catch (Exception e) {
             e.printStackTrace();
-            //
+            //TODO
+            try {
+                Thread.sleep(2000L);
+            } catch (InterruptedException e1) {
+                e1.printStackTrace();
+            }
         } finally {
             if (null != archive) {
                 try {
