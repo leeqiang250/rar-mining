@@ -57,7 +57,7 @@ public class RARMining {
 								}
 
 								writer.write("\n");
-								writer.write("u t -p" + i + " f");
+								writer.write("./u t -p" + i + " f");
 							}
 
 							writer.flush();
