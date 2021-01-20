@@ -24,7 +24,6 @@ public class RARMining {
 	}
 
 	public void start(int interval) {
-		ByteArrayOutputStream stream = new ByteArrayOutputStream();
 		while (true) {
 			try {
 				Dto<TaskDto> taskDto = Http.DispatchGet(dispatchHost + Path.TASK_GET, TaskDto.class);
@@ -41,9 +40,7 @@ public class RARMining {
 						for (int i = 0; i < len; i++) {
 							if (i % interval == 0) {
 								writer.write("\n");
-								writer.write("\n");
 								writer.write("echo \"group=" + taskDto.data.group + "&index=" + i + "\"");
-								writer.write("\n");
 							}
 
 							writer.write("\n");
@@ -54,7 +51,7 @@ public class RARMining {
 						writer.close();
 
 						Runtime.getRuntime().exec("chmod +x " + name);
-						Process process = Runtime.getRuntime().exec(  name + " &");
+						Process process = Runtime.getRuntime().exec(name + " &");
 						InputStream inputStream = process.getInputStream();
 						BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
 						String line;
