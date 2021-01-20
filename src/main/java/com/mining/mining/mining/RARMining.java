@@ -38,66 +38,71 @@ public class RARMining {
 		while (true) {
 			try {
 				taskDto = Http.DispatchGet(dispatchHost + Path.TASK_GET, TaskDto.class);
-				if (Dto.success(taskDto) && null != taskDto.data) {
-					confirmDto = Http.DispatchGet(dispatchHost + String.format(Path.TASK_CONFIRM, taskDto.data.group), Boolean.class);
-					if (Dto.success(confirmDto) && confirmDto.data) {
-						String name = taskDto.data.group + ".sh";
-						file = new File(name);
+				if (Dto.success(taskDto)) {
+					if (null != taskDto.data) {
+						confirmDto = Http.DispatchGet(dispatchHost + String.format(Path.TASK_CONFIRM, taskDto.data.group), Boolean.class);
+						if (Dto.success(confirmDto) && confirmDto.data) {
+							String name = taskDto.data.group + ".sh";
+							file = new File(name);
 
-						writer = new FileWriter(name, true);
-						writer.write("#!/bin/sh");
+							writer = new FileWriter(name, true);
+							writer.write("#!/bin/sh");
 
-						passwords = taskDto.data.text.split(",");
-						len = passwords.length;
-						for (int i = 0; i < len; i++) {
-							if (i % interval == 0) {
+							passwords = taskDto.data.text.split(",");
+							len = passwords.length;
+							for (int i = 0; i < len; i++) {
+								if (i % interval == 0) {
+									writer.write("\n");
+									writer.write("echo \"group=" + taskDto.data.group + "&index=" + i + "\"");
+								}
+
 								writer.write("\n");
-								writer.write("echo \"group=" + taskDto.data.group + "&index=" + i + "\"");
+								writer.write("u t -p" + i + " f");
 							}
 
-							writer.write("\n");
-							writer.write("u t -p" + i + " f");
-						}
+							writer.flush();
+							writer.close();
 
-						writer.flush();
-						writer.close();
+							Runtime.getRuntime().exec("chmod +x " + name);
+							process = new ProcessBuilder(file.getAbsolutePath()).redirectErrorStream(true).start();
+							inputStream = process.getInputStream();
+							reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+							while (null != (line = reader.readLine())) {
+								if (0 <= line.indexOf(taskDto.data.group)) {
+									report(line);
 
-						Runtime.getRuntime().exec("chmod +x " + name);
-						process = new ProcessBuilder(file.getAbsolutePath()).redirectErrorStream(true).start();
-						inputStream = process.getInputStream();
-						reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
-						while (null != (line = reader.readLine())) {
-							if (0 <= line.indexOf(taskDto.data.group)) {
-								report(line);
-
-								log.info("line:{}", line);
-							}
-
-							if (0 <= line.indexOf(ok)) {
-								while (!discover(taskDto.data.group)) {
-									sleep();
+									log.info("line:{}", line);
 								}
 
-								log.info("line:{}", line);
-								log.info("discover:{}", line);
-							}
-						}
+								if (0 <= line.indexOf(ok)) {
+									while (!discover(taskDto.data.group)) {
+										sleep();
+									}
 
-						while (true) {
-							try {
-								completeDto = Http.DispatchGet(dispatchHost + String.format(Path.TASK_COMPLETE, taskDto.data.group), Boolean.class);
-								if (Dto.success(completeDto) && completeDto.data) {
-									break;
-								} else {
-									sleep();
+									log.info("line:{}", line);
+									log.info("discover:{}", line);
 								}
-							} catch (Exception e) {
-								e.printStackTrace();
-								log.error("Exception {}", e);
 							}
-						}
 
-						file.delete();
+							while (true) {
+								try {
+									completeDto = Http.DispatchGet(dispatchHost + String.format(Path.TASK_COMPLETE, taskDto.data.group), Boolean.class);
+									if (Dto.success(completeDto) && completeDto.data) {
+										break;
+									} else {
+										sleep();
+									}
+								} catch (Exception e) {
+									e.printStackTrace();
+									log.error("Exception {}", e);
+								}
+							}
+
+							file.delete();
+						}else {
+							log.info("taskDto {}", taskDto);
+							sleep();
+						}
 					} else {
 						sleep();
 					}
@@ -142,7 +147,6 @@ public class RARMining {
 			}
 		}
 	}
-
 
 	private void sleep() throws InterruptedException {
 		Thread.sleep(5000L);
