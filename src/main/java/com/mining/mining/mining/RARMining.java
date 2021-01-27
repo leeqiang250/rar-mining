@@ -102,8 +102,6 @@ public class RARMining {
 									log.error("Exception {}", e);
 								}
 							}
-
-							file.delete();
 						} else {
 							sleep();
 						}
@@ -146,6 +144,13 @@ public class RARMining {
 					try {
 						writer.close();
 					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+				if (null != file) {
+					try {
+						file.delete();
+					} catch (Exception e) {
 						e.printStackTrace();
 					}
 				}
