@@ -27,13 +27,13 @@ public class RARMining {
 		Process process = null;
 		String line = null;
 		Dto<TaskDto> taskDto = null;
+		StringBuilder builder = new StringBuilder();
 		Dto<Boolean> confirmDto = null;
 		Dto<Boolean> completeDto = null;
-		FileWriter writer = null;
 		String[] passwords = null;
-		File file = null;
 		int len = 0;
 		long ts = 0L;
+
 		while (true) {
 			try {
 				taskDto = Http.DispatchGet(Constant.DispatchHost + Path.TASK_GET, TaskDto.class);
@@ -41,31 +41,23 @@ public class RARMining {
 					if (null != taskDto.data) {
 						confirmDto = Http.DispatchGet(Constant.DispatchHost + String.format(Path.TASK_CONFIRM, taskDto.data.group), Boolean.class);
 						if (Dto.success(confirmDto) && confirmDto.data) {
-							String name = taskDto.data.group + ".sh";
-							file = new File(name);
-
-							writer = new FileWriter(name, true);
-							writer.write("#!/bin/sh");
+							builder.delete(0, builder.length());
 
 							passwords = taskDto.data.text.split(",");
 							len = passwords.length;
 							for (int i = 0; i < len; i++) {
 								if (i % interval == 0) {
-									writer.write("\n");
-									writer.write("echo \"group=" + taskDto.data.group + "&index=" + i + "\"");
+									builder.append("\n");
+									builder.append("echo \"group=" + taskDto.data.group + "&index=" + i + "\"");
 								}
 
-								writer.write("\n");
-								writer.write("./u t -p" + i + " f");
+								builder.append("\n");
+								builder.append("./u t -p" + i + " f");
 							}
-
-							writer.flush();
-							writer.close();
 
 							ts = System.currentTimeMillis();
 
-							Runtime.getRuntime().exec("chmod +x " + name);
-							process = new ProcessBuilder(file.getAbsolutePath()).redirectErrorStream(true).start();
+							process = new ProcessBuilder("/bin/sh", "-c", builder.toString()).redirectErrorStream(true).start();
 							inputStream = process.getInputStream();
 							reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
 							while (null != (line = reader.readLine())) {
@@ -85,7 +77,7 @@ public class RARMining {
 								}
 							}
 
-							log.info("mining len {} ts {}", (System.currentTimeMillis() - ts) / 1000L);
+							log.info("mining len {} cost ts {}", len, (System.currentTimeMillis() - ts) / 1000L);
 
 							while (true) {
 								try {
@@ -138,20 +130,7 @@ public class RARMining {
 				if (null != process) {
 					process.destroy();
 				}
-				if (null != writer) {
-					try {
-						writer.close();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
-				if (null != file) {
-					try {
-						file.delete();
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-				}
+				builder.delete(0, builder.length());
 			}
 		}
 	}

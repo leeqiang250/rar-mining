@@ -30,7 +30,7 @@ public class test004 {
 		writer.close();
 
 		Runtime runtime = Runtime.getRuntime();
-		runtime.exec("chmod +x " + "./" + name);
+		runtime.exec("chmod +777 " + "./" + name);
 		Process process = runtime.exec("./" + name);
 		InputStream inputStream = process.getInputStream();
 		BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));

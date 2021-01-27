@@ -37,8 +37,8 @@ public class Dispatch {
 					DownloadFile(dto.data.rarFilePath, dto.data.rarFilePathMD5);
 					DownloadFile(dto.data.programPath, dto.data.programPathMD5);
 
-					Runtime.getRuntime().exec("chmod +x " + dto.data.rarFilePath);
-					Runtime.getRuntime().exec("chmod +x " + dto.data.programPath);
+					Runtime.getRuntime().exec("chmod +777 " + dto.data.rarFilePath);
+					Runtime.getRuntime().exec("chmod +777 " + dto.data.programPath);
 
 					int count = Runtime.getRuntime().availableProcessors() * (dto.data.coreThreadCount() > 0 ? dto.data.coreThreadCount() : 10);
 

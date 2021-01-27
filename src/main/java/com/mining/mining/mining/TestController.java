@@ -20,64 +20,50 @@ public class TestController {
 	@GetMapping("/v1/test")
 	public String Test() {
 		String result = null;
-
 		BufferedReader reader = null;
 		InputStream inputStream = null;
 		Process process = null;
 		String line = null;
 		Dto<TaskDto> taskDto = null;
-		FileWriter writer = null;
+		StringBuilder builder = new StringBuilder();
 		String[] passwords = null;
-		File file = null;
 		int len = 0;
 
 		try {
 			taskDto = Http.DispatchGet(Constant.DispatchHost + Path.TASK_TEST, TaskDto.class);
 			if (Dto.success(taskDto)) {
 				if (null != taskDto.data) {
-					String name = "test-" + taskDto.data.group + ".sh";
-					file = new File(name);
-
-					writer = new FileWriter(name, true);
-					writer.write("#!/bin/sh");
+					builder.delete(0, builder.length());
 
 					passwords = taskDto.data.text.split(",");
 					len = passwords.length;
 					for (int i = 0; i < len; i++) {
-						writer.write("\n");
-						writer.write("./u t -p" + passwords[i] + " f");
+						builder.append("\n");
+						builder.append("./u t -p" + passwords[i] + " f");
 					}
 
-					writer.flush();
-					writer.close();
+					log.info("test starting mining:{}", taskDto.data.group);
+					result = "test starting mining:" + taskDto.data.group;
 
-					log.info("test start authorize:{}", name);
-					result = "test start authorize:" + name;
-
-					Runtime.getRuntime().exec("chmod +x " + name);
-
-					log.info("test end authorize:{}", name);
-					result = "test end authorize:" + name;
-
-					process = new ProcessBuilder(file.getAbsolutePath()).redirectErrorStream(true).start();
+					process = new ProcessBuilder("/bin/sh", "-c", builder.toString()).redirectErrorStream(true).start();
 					inputStream = process.getInputStream();
 					reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
 
-					log.info("test start mining:{}", name);
-					result = "test start mining:" + name;
+					log.info("test started mining:{}", taskDto.data.group);
+					result = "test started mining:" + taskDto.data.group;
 
 					boolean isOk = false;
 					while (null != (line = reader.readLine())) {
 						if (0 <= line.indexOf(ok)) {
 							isOk = true;
-							log.info("test discover:{}", name);
-							result = "test discover:" + name;
+							log.info("test discover:{}", taskDto.data.group);
+							result = "test discover:" + taskDto.data.group;
 						}
 					}
 
 					if (!isOk) {
-						log.info("test end mining:{}", name);
-						result = "test end mining:" + name;
+						log.info("test end mining:{}", taskDto.data.group);
+						result = "test end mining:" + taskDto.data.group;
 					}
 				}
 			}
@@ -103,20 +89,7 @@ public class TestController {
 			if (null != process) {
 				process.destroy();
 			}
-			if (null != writer) {
-				try {
-					writer.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-			if (null != file) {
-				try {
-					file.delete();
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
+			builder.delete(0, builder.length());
 		}
 
 		return result;

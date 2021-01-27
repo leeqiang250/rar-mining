@@ -26,6 +26,9 @@ public class File {
 
 			BigInteger bi = new BigInteger(1, md5.digest());
 			value = bi.toString(16);
+			while (value.length() < 32) {
+				value = "0" + value;
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			//
