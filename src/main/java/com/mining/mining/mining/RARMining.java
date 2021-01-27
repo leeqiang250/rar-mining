@@ -98,6 +98,7 @@ public class RARMining {
 					} else {
 						log.info("taskDto {}", taskDto);
 						sleep();
+						sleep();
 					}
 				} else {
 					sleep();
