@@ -45,7 +45,7 @@ public class TestController {
 					len = passwords.length;
 					for (int i = 0; i < len; i++) {
 						writer.write("\n");
-						writer.write("./u t -p" + i + " f");
+						writer.write("./u t -p" + passwords[i] + " f");
 					}
 
 					writer.flush();

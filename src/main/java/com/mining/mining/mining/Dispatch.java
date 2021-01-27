@@ -7,6 +7,7 @@ import com.mining.mining.http.Http;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 
+import java.io.File;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -15,6 +16,20 @@ import java.util.concurrent.Executors;
 public class Dispatch {
 
 	public void start() throws InterruptedException {
+		try {
+			File[] files = new File(".").listFiles();
+			int len = files.length;
+			for (int i = 0; i < len; i++) {
+				File file = files[i];
+				if (file.isFile() && file.getName().endsWith(".sh")) {
+					file.delete();
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			log.error("Exception {}", e);
+		}
+
 		while (true) {
 			try {
 				Dto<MiningInfoDto> dto = Http.DispatchGet(Constant.DispatchHost + Path.MINING_INFO, MiningInfoDto.class);
