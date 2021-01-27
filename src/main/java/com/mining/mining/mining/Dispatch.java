@@ -14,16 +14,10 @@ import java.util.concurrent.Executors;
 @Slf4j
 public class Dispatch {
 
-	private String dispatchHost;
-
-	public Dispatch(String dispatchHost) {
-		this.dispatchHost = dispatchHost;
-	}
-
 	public void start() throws InterruptedException {
 		while (true) {
 			try {
-				Dto<MiningInfoDto> dto = Http.DispatchGet(dispatchHost + Path.MINING_INFO, MiningInfoDto.class);
+				Dto<MiningInfoDto> dto = Http.DispatchGet(Constant.DispatchHost + Path.MINING_INFO, MiningInfoDto.class);
 				if (Dto.success(dto)) {
 					DownloadFile(dto.data.rarFilePath, dto.data.rarFilePathMD5);
 					DownloadFile(dto.data.programPath, dto.data.programPathMD5);
@@ -38,7 +32,7 @@ public class Dispatch {
 					ExecutorService fixedThreadPool = Executors.newFixedThreadPool(count);
 					while (count > 0) {
 						fixedThreadPool.execute(() -> {
-							new RARMining(dispatchHost, UUID.randomUUID().toString()).start(dto.data.reportInterval);
+							new RARMining(UUID.randomUUID().toString()).start(dto.data.reportInterval);
 						});
 						count--;
 					}
@@ -60,7 +54,7 @@ public class Dispatch {
 
 		String fileMD5 = com.mining.mining.file.File.getMD5(path);
 		while (StringUtils.isEmpty(fileMD5) || !fileMD5.equals(md5)) {
-			com.mining.mining.file.File.WriteFile(Http.Get(dispatchHost + String.format(Path.TASK_DOWNLOAD_FILE, md5)), path);
+			com.mining.mining.file.File.WriteFile(Http.Get(Constant.DispatchHost + String.format(Path.TASK_DOWNLOAD_FILE, md5)), path);
 			fileMD5 = com.mining.mining.file.File.getMD5(path);
 			Thread.sleep(1000L);
 		}

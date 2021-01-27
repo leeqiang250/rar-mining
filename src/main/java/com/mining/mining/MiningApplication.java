@@ -1,5 +1,6 @@
 package com.mining.mining;
 
+import com.mining.mining.mining.Constant;
 import com.mining.mining.mining.Dispatch;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,7 +22,8 @@ public class MiningApplication implements ApplicationRunner {
 
 	@Override
 	public void run(ApplicationArguments args) throws Exception {
-		new Dispatch(dispatchHost).start();
+		Constant.DispatchHost = dispatchHost;
+		new Dispatch().start();
 	}
 
 }

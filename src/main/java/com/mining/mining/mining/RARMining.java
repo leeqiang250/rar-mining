@@ -15,11 +15,9 @@ import java.nio.charset.StandardCharsets;
 public class RARMining {
 
 	private String group = null;
-	private String dispatchHost;
 	private String ok = "All OK";
 
-	public RARMining(String dispatchHost, String group) {
-		this.dispatchHost = dispatchHost;
+	public RARMining(String group) {
 		this.group = group;
 	}
 
@@ -38,10 +36,10 @@ public class RARMining {
 		long ts = 0L;
 		while (true) {
 			try {
-				taskDto = Http.DispatchGet(dispatchHost + Path.TASK_GET, TaskDto.class);
+				taskDto = Http.DispatchGet(Constant.DispatchHost + Path.TASK_GET, TaskDto.class);
 				if (Dto.success(taskDto)) {
 					if (null != taskDto.data) {
-						confirmDto = Http.DispatchGet(dispatchHost + String.format(Path.TASK_CONFIRM, taskDto.data.group), Boolean.class);
+						confirmDto = Http.DispatchGet(Constant.DispatchHost + String.format(Path.TASK_CONFIRM, taskDto.data.group), Boolean.class);
 						if (Dto.success(confirmDto) && confirmDto.data) {
 							String name = taskDto.data.group + ".sh";
 							file = new File(name);
@@ -91,7 +89,7 @@ public class RARMining {
 
 							while (true) {
 								try {
-									completeDto = Http.DispatchGet(dispatchHost + String.format(Path.TASK_COMPLETE, taskDto.data.group), Boolean.class);
+									completeDto = Http.DispatchGet(Constant.DispatchHost + String.format(Path.TASK_COMPLETE, taskDto.data.group), Boolean.class);
 									if (Dto.success(completeDto) && completeDto.data) {
 										break;
 									} else {
@@ -164,9 +162,7 @@ public class RARMining {
 
 	private boolean report(String line) {
 		try {
-			Dto<Boolean> reportDto = Http.DispatchGet(
-					dispatchHost + String.format(Path.MINING_RUN_REPORT, InetAddress.getLocalHost().getHostAddress(), group) + line,
-					Boolean.class);
+			Dto<Boolean> reportDto = Http.DispatchGet(Constant.DispatchHost + String.format(Path.MINING_RUN_REPORT, InetAddress.getLocalHost().getHostAddress(), group) + line, Boolean.class);
 			if (Dto.success(reportDto) && reportDto.data) {
 				return true;
 			}
@@ -180,7 +176,7 @@ public class RARMining {
 
 	private boolean discover(String group) {
 		try {
-			Dto<Boolean> reportDto = Http.DispatchGet(dispatchHost + String.format(Path.TASK_DISCOVER, group), Boolean.class);
+			Dto<Boolean> reportDto = Http.DispatchGet(Constant.DispatchHost + String.format(Path.TASK_DISCOVER, group), Boolean.class);
 			if (Dto.success(reportDto) && reportDto.data) {
 				return true;
 			}
