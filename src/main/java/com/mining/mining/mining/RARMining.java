@@ -81,7 +81,7 @@ public class RARMining {
 									}
 
 									log.info("line:{}", line);
-									log.info("discover:{}", line);
+									log.info("discover:{}", taskDto.data.text);
 								}
 							}
 
