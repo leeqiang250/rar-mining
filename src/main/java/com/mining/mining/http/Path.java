@@ -11,5 +11,6 @@ public class Path {
 	public static final String TASK_CONFIRM = "/task-confirm?group=%s";
 	public static final String TASK_COMPLETE = "/task-complete?ip=%s&group=%s";
 	public static final String TASK_DISCOVER = "/task-discover?group=%s";
+	public static final String TASK_CANCEL = "/task-cancel?group=%s";
 
 }

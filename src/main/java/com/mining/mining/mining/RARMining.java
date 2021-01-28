@@ -52,7 +52,7 @@ public class RARMining {
 								}
 
 								builder.append("\n");
-								builder.append("./u t -p" + i + " f");
+								builder.append("./u t -p" + passwords[i] + " f");
 							}
 
 							ts = System.currentTimeMillis();
@@ -106,6 +106,10 @@ public class RARMining {
 			} catch (Exception e) {
 				e.printStackTrace();
 				log.error("Exception {}", e);
+
+				if (Dto.success(taskDto) && null != taskDto.data) {
+					Http.DispatchGet(Constant.DispatchHost + String.format(Path.TASK_CANCEL, taskDto.data.group), Boolean.class);
+				}
 
 				try {
 					sleep();
