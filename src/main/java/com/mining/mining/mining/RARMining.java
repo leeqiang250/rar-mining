@@ -81,7 +81,7 @@ public class RARMining {
 
 							while (true) {
 								try {
-									completeDto = Http.DispatchGet(Constant.DispatchHost + String.format(Path.TASK_COMPLETE, taskDto.data.group), Boolean.class);
+									completeDto = Http.DispatchGet(Constant.DispatchHost + String.format(Path.TASK_COMPLETE, InetAddress.getLocalHost().getHostAddress(), taskDto.data.group), Boolean.class);
 									if (Dto.success(completeDto) && completeDto.data) {
 										break;
 									} else {
