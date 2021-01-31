@@ -32,7 +32,8 @@ public class RARMining {
 		Dto<Boolean> completeDto = null;
 		String[] passwords = null;
 		int len = 0;
-		long ts = 0L;
+		long startTs = 0L;
+		long endTs = 0L;
 
 		while (true) {
 			try {
@@ -55,7 +56,7 @@ public class RARMining {
 								builder.append("./u t -p" + passwords[i] + " f");
 							}
 
-							ts = System.currentTimeMillis();
+							startTs = System.currentTimeMillis() / 1000L;
 
 							process = new ProcessBuilder("/bin/sh", "-c", builder.toString()).redirectErrorStream(true).start();
 							inputStream = process.getInputStream();
@@ -77,11 +78,12 @@ public class RARMining {
 								}
 							}
 
-							log.info("mining len {} cost ts {}", len, (System.currentTimeMillis() - ts) / 1000L);
+							endTs = System.currentTimeMillis() / 1000L;
+							log.info("mining len {} cost ts {}", len, endTs - startTs);
 
 							while (true) {
 								try {
-									completeDto = Http.DispatchGet(Constant.DispatchHost + String.format(Path.TASK_COMPLETE, InetAddress.getLocalHost().getHostAddress(), taskDto.data.group), Boolean.class);
+									completeDto = Http.DispatchGet(Constant.DispatchHost + String.format(Path.TASK_COMPLETE, InetAddress.getLocalHost().getHostAddress(), len, endTs - startTs, taskDto.data.group), Boolean.class);
 									if (Dto.success(completeDto) && completeDto.data) {
 										break;
 									} else {
